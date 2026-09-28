@@ -16,7 +16,7 @@ Movie Harbor helps you reduce the size of a movie library while choosing exactly
 | Windows x64 | [MovieHarbor-Windows-x64.exe](https://github.com/enxmp/movie-harbor/releases/download/v0.1.0/MovieHarbor-Windows-x64.exe) | Windows 10/11, WebView2, FFmpeg/ffprobe; a compatible NVIDIA GPU for HEVC encoding |
 | macOS Apple Silicon | [MovieHarbor-macOS-arm64.dmg](https://github.com/enxmp/movie-harbor/releases/download/v0.1.0/MovieHarbor-macOS-arm64.dmg) | macOS 12+, Apple Silicon, FFmpeg/ffprobe with VideoToolbox |
 
-The initial release is unsigned and not Apple-notarized. Windows SmartScreen or macOS Gatekeeper may ask you to confirm opening it. Verify the download against the release's `SHA256SUMS.txt`. On macOS, drag Movie Harbor to Applications; use the system's **Privacy & Security → Open Anyway** flow if opening is blocked. Do not disable platform protections globally.
+The initial release has no Developer ID signature or Apple notarization. Windows SmartScreen or macOS Gatekeeper may ask you to confirm opening it. Verify the download against the release's `SHA256SUMS.txt`. On macOS, drag Movie Harbor to Applications and use **Privacy & Security → Open Anyway** if blocked. If macOS still reports that the app is damaged, verify the checksum first, then remove quarantine from only this app with `xattr -dr com.apple.quarantine "/Applications/Movie Harbor.app"`. Do not disable platform protections globally.
 
 Install [FFmpeg and ffprobe](https://ffmpeg.org/download.html) separately. On macOS, `brew install ffmpeg` is an option. On Windows, use a trusted FFmpeg build with NVENC support. The app looks beside its executable, on PATH, and in common Homebrew locations; you can choose explicit paths in Settings. FFmpeg binaries are not included in the downloads.
 
@@ -86,7 +86,7 @@ cargo test --locked
 cargo build --release --locked --features custom-protocol
 ```
 
-The executable is under `src-tauri/target/release/`. On macOS, package with `npm run tauri -- build --bundles app,dmg` from the project root. The release workflow builds on native Windows and macOS runners.
+The executable is under `src-tauri/target/release/`. On macOS, build with `npm run tauri -- build --bundles app,dmg`, then run `bash scripts/package-macos.sh "src-tauri/target/release/bundle/macos/Movie Harbor.app" "release/MovieHarbor-macOS-arm64.dmg"` to seal the app bundle and verify the DMG. The release workflow builds on native Windows and macOS runners.
 
 Integration tests are marked ignored because they launch FFmpeg or require encoder hardware. For example:
 

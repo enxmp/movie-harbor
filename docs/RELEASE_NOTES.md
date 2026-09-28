@@ -9,7 +9,7 @@ Movie Harbor is a focused movie-library converter for Windows and Apple Silicon:
 - Subtitles, chapters, font attachments, deinterlacing, output validation, backup controls, and exact-job cleanup.
 - Configurable SSH remote conversion with opt-in hosting, per-session authentication, and folder restrictions.
 
-**Downloads:** Windows x64 `.exe` and Apple Silicon `.dmg`. FFmpeg/ffprobe are required separately. No ZIP is needed for Windows. The releases are unsigned and not Apple-notarized; operating-system warnings are expected. SHA-256 hashes and third-party notices are attached.
+**Downloads:** Windows x64 `.exe` and Apple Silicon `.dmg`. FFmpeg/ffprobe are required separately. No ZIP is needed for Windows. The macOS app bundle is sealed with an ad hoc signature, but the release has no Developer ID signature or Apple notarization; Gatekeeper approval may be needed. SHA-256 hashes and third-party notices are attached.
 
 **Before converting:** Replace original defaults on and original-backup retention defaults off. Disable replacement or enable backups when you want to retain the source. HDR/Dolby Vision needs video passthrough. The queue is session-only; output checks use metadata and short decode samples.
 
