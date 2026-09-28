@@ -1,0 +1,10 @@
+import { strict as assert } from 'node:assert';
+import { recommendedAudio, canEac3 } from './src/audioPolicy.ts';
+assert.equal(recommendedAudio({codec_name:'dts',profile:'DTS',channels:6,channel_layout:'5.1(side)',tags:{title:'DTS-HD MA CORE 1536K'}}),'eac3');
+for(const codec_name of ['aac','ac3','eac3','opus','flac','truehd'])assert.equal(recommendedAudio({codec_name,channels:6,channel_layout:'5.1'}),'copy');
+assert.equal(recommendedAudio({codec_name:'dts',profile:'DTS-HD MA',channels:6,channel_layout:'5.1'}),'copy');
+assert.equal(recommendedAudio({codec_name:'dts',channels:2,channel_layout:'stereo'}),'aac');
+assert.equal(recommendedAudio({codec_name:'dts',channels:8,channel_layout:'7.1'}),'copy');
+assert.equal(canEac3({codec_name:'dts',channels:8,channel_layout:'7.1'}),false);
+assert.equal(canEac3({codec_name:'dts',channels:6}),false);
+console.log('Audio recommendation cases passed');

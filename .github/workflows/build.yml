@@ -1,0 +1,73 @@
+name: Build and test
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-15]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+          cache: npm
+      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87
+        with:
+          toolchain: stable
+      - run: npm ci
+      - run: npm run build
+      - name: Rust tests
+        working-directory: src-tauri
+        run: cargo test --locked
+      - name: Windows executable
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:RUSTFLAGS="--remap-path-prefix=$env:GITHUB_WORKSPACE=/workspace/movie-harbor --remap-path-prefix=$env:USERPROFILE=/build-user"
+          cargo build --manifest-path src-tauri/Cargo.toml --release --locked --features custom-protocol
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          New-Item -ItemType Directory -Path release -Force | Out-Null
+          Copy-Item src-tauri/target/release/movie-harbor.exe release/MovieHarbor-Windows-x64.exe
+      - name: Apple Silicon application
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          rustup target add aarch64-apple-darwin
+          export RUSTFLAGS="--remap-path-prefix=$GITHUB_WORKSPACE=/workspace/movie-harbor --remap-path-prefix=$HOME=/build-user"
+          npm run tauri -- build --target aarch64-apple-darwin --bundles app,dmg
+          mkdir -p release
+          cp src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg release/MovieHarbor-macOS-arm64.dmg
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: MovieHarbor-${{ runner.os }}
+          path: release/*
+          if-no-files-found: error
+  draft-release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          path: release
+          merge-multiple: true
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          cp LICENSE THIRD_PARTY_LICENSES.txt release/
+          (cd release && sha256sum MovieHarbor-* LICENSE THIRD_PARTY_LICENSES.txt > SHA256SUMS.txt)
+          gh release create "$GITHUB_REF_NAME" release/* --draft --prerelease --title "Movie Harbor $GITHUB_REF_NAME" --notes-file docs/RELEASE_NOTES.md
